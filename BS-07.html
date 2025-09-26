@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Notificaciones - Sabores Caseros</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f9f9f9; }
+        .notification { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .status { text-align: center; font-size: 24px; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+    <h2>Notificaciones Pendientes</h2>
+    <div class="notification">
+        <p>Cambio de estado de su pedido! Ver Aquí</p>
+    </div>
+    <div class="status">
+        <img src="car-icon.png" alt="Car" style="width: 50px;"> <!-- Placeholder para icono -->
+        <p>Tu pedido fue confirmado</p>
+        <button>OK</button>
+    </div>
+    <!-- Escenario en camino -->
+    <div class="modal" id="en-camino">
+        <p>Tu pedido esta en camino</p>
+    </div>
+    <!-- Escenario retrasado -->
+    <div class="modal" id="retrasado">
+        <p>Tu pedido esta retrasado</p>
+    </div>
+</body>
+</html>

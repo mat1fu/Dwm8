@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Estado - Sabores Caseros</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f9f9f9; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        .aviso { text-align: center; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+    <h2>Aviso</h2>
+    <div class="aviso">
+        <p>El pago fue exitoso</p>
+    </div>
+    <table>
+        <tr>
+            <th>Producto</th>
+            <th>Precio</th>
+        </tr>
+        <tr>
+            <td>Producto 1</td>
+            <td>Precio</td>
+        </tr>
+        <tr>
+            <td>Producto 2</td>
+            <td>Precio</td>
+        </tr>
+    </tr>
+    </table>
+    <div class="modal" id="transaccion">
+        <p>Aviso</p>
+        <p>Transacción rechazada</p>
+        <button>OK</button>
+    </div>
+</body>
+</html>

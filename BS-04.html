@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial - Sabores Caseros</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f9f9f9; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        .modal button { width: auto; background: #dc3545; } /* Rojo para error */
+    </style>
+</head>
+<body>
+    <h2>Historial de Compras</h2>
+    <table>
+        <tr>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Detalles</th>
+        </tr>
+        <tr>
+            <td>17/10/2025</td>
+            <td>Ver</td>
+            <td>Ver</td>
+        </tr>
+        <tr>
+            <td>19/10/2025</td>
+            <td>Ver</td>
+            <td>Ver</td>
+        </tr>
+        <tr>
+            <td>10/06/2025</td>
+            <td>Ver</td>
+            <td>Ver</td>
+        </tr>
+    </table>
+    <!-- Modal para error de conexión -->
+    <div class="modal" id="error-conexion">
+        <p>Error de conexión</p>
+        <p>Escenario: No hay conexión con la API o de Internet</p>
+        <button>OK</button>
+    </div>
+    <!-- Escenario sin pedidos -->
+    <div class="modal" id="no-pedidos">
+        <p>Aun no tienes Pedidos Registrados</p>
+    </div>
+</body>
+</html>
