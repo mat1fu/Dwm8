@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rotisería Sabores Caseros - Pago (BS-07)</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,300" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body{font-family:'Open Sans',Arial,sans-serif;margin:0;background:#f9f9f9}
+    header{background:#000;color:#fff;padding:10px;display:flex;justify-content:space-between;align-items:center}
+    .logo{background:orange;padding:10px 20px;border-radius:50px;font-weight:700;color:#000}
+    nav{background:#222;padding:10px;text-align:center}
+    nav a{color:#fff;margin:0 10px;text-decoration:none}
+    .box{max-width:520px;margin:30px auto;background:#fff;padding:16px;border-radius:8px;border:1px solid #eee}
+    footer{background:#222;color:#fff;text-align:center;padding:15px;margin-top:30px;font-size:14px}
+  </style>
+</head>
+<body>
+  <header><div class="logo">Rotisería Sabores Caseros</div><div>Contacto: +56 9 9999 9999</div></header>
+  <nav><a href="#">Inicio</a><a href="#">Pagar</a><a href="#">Contacto</a></nav>
+
+  <main>
+    <div class="box">
+      <h3>Pagar con WebPay (simulado)</h3>
+      <select id="scenario" class="form-select mb-2">
+        <option value="success">Pago exitoso</option>
+        <option value="rejected">Pago rechazado</option>
+        <option value="down">Conexión caída (banco)</option>
+      </select>
+      <input id="card" class="form-control mb-2" placeholder="Número de tarjeta" />
+      <button class="btn btn-primary w-100" onclick="pay()">Pagar</button>
+      <div id="msg" class="mt-2"></div>
+    </div>
+  </main>
+
+  <footer>© 2025 Rotisería Sabores Caseros - Todos los derechos reservados.</footer>
+
+  <script>
+    function pay(){
+      const sc = document.getElementById('scenario').value;
+      const msg = document.getElementById('msg'); msg.textContent='';
+      if(sc==='success'){ alert('Pago confirmado'); msg.textContent='Pago confirmado (simulado)'; }
+      else if(sc==='rejected'){ alert('Pago rechazado'); msg.textContent='Pago rechazado'; }
+      else { alert('Error en la pasarela de pago'); msg.textContent='Error en la pasarela de pago'; }
+    }
+  </script>
+</body>
+</html>
