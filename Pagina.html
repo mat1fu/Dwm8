@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rotisería Sabores Caseros — Versión A (Menú Plano)</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,300" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body{font-family:'Open Sans',Arial,sans-serif;margin:0;background:#f9f9f9}
+    header{background:#000;color:#fff;padding:10px;display:flex;justify-content:space-between;align-items:center}
+    .logo{background:orange;padding:10px 20px;border-radius:50px;font-weight:700;color:#000}
+    nav{background:#222;padding:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+    nav a{color:#fff;text-decoration:none;cursor:pointer;padding:6px 10px;border-radius:6px}
+    nav a.active{background:#444}
+    main{min-height:70vh;padding:20px}
+    footer{background:#222;color:#fff;text-align:center;padding:15px;font-size:14px}
+    .card-slim{max-width:920px;margin:12px auto;padding:16px;background:#fff;border-radius:8px;border:1px solid #eee}
+    .muted-small{font-size:13px;color:#666}
+    .noti{background:#f7f7f7;padding:10px;border-radius:6px;margin-bottom:8px}
+    .productos{display:flex;flex-wrap:wrap;gap:12px}
+    .producto{background:#fff;padding:12px;border-radius:8px;border:1px solid #eee;width:220px;text-align:center}
+    .hidden{display:none}
+    @media(max-width:800px){ nav{overflow:auto} .card-slim{margin:6px} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Rotisería Sabores Caseros</div>
+    <div id="userInfo" class="muted-small">Invitado</div>
+  </header>
+
+  <nav id="mainNav" class="mb-2">
+    <a data-section="menu">Menú</a>
+    <a data-section="registro">Registro</a>
+    <a data-section="login">Login</a>
+    <a data-section="categorias">Categorías</a>
+    <a data-section="carrito">Carrito</a>
+    <a data-section="direccion">Dirección</a>
+    <a data-section="pago">Medio de Pago</a>
+    <a data-section="validarPago">Validar Pago</a>
+    <a data-section="boleta">Boleta</a>
+    <a data-section="estado">Estado</a>
+    <a data-section="historial">Historial</a>
+    <a data-section="notificaciones">Notificaciones</a>
+    <a data-section="buscar">Buscar</a>
+    <a data-section="disponibilidad">Disponibilidad</a>
+    <a data-section="seguimiento">Seguimiento</a>
+    <a data-section="confirmDelivery">Confirmar entrega</a>
+  </nav>
+
+  <main id="content" class="container"></main>
+
+  <footer>© 2025 Rotisería Sabores Caseros - Todos los derechos reservados.</footer>
+
+<script>
+const App = {
+  users: [ { email:'sofia@example.com', password:'Clave2025', locked:false } ],
+  currentUser: null,
+  failedAttempts: {},
+  cart: [],
+  stock: { 'Empanada de pollo': 10, 'Pizza familiar': 0, 'Pollo asado': 5, 'Empanada':5 },
+  orders: [
+    { id: 1234, user: 'sofia@example.com', date:'2025-01-01', status:'Entregado', total:12000 },
+    { id: 5678, user: 'sofia@example.com', date:'2025-02-15', status:'En preparación', total:8500 }
+  ],
+  notifications: [],
+  covered: ['Santiago', 'Providencia', 'Ñuñoa', 'Santiago Centro'],
+  nextOrderId: 9000
+};
+const sections = {};
+sections['menu'] = `
+  <div class="card-slim">
+    <h3>Menú principal</h3>
+    <p class="muted-small">Selecciona productos desde aquí o ve a Categorías.</p>
+    <div id="menuProducts" class="productos mt-3"></div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-outline-secondary" onclick="showSection('categorias')">Ver Categorías</button>
+      <button class="btn btn-outline-primary" onclick="showSection('buscar')">Buscar</button>
+    </div>
+  </div>
+`;
+sections['registro'] = `
+  <div class="card-slim">
+    <h3>Registro de cliente</h3>
+    <p>Regístrate con tu email y contraseña</p>
+    <input id="reg_email" class="form-control mb-2" placeholder="sofia@example.com" />
+    <input id="reg_password" type="password" class="form-control mb-2" placeholder="Contraseña" />
+    <button id="btnReg" class="btn btn-primary w-100">Registrarme</button>
+    <div id="reg_feedback" class="msg text-danger mt-2"></div>
+  </div>
+`;
+sections['login'] = `
+  <div class="card-slim">
+    <h3>Iniciar sesión</h3>
+    <input id="login_email" class="form-control mb-2" placeholder="Correo" />
+    <input id="login_password" type="password" class="form-control mb-2" placeholder="Contraseña" />
+    <button id="btnLogin" class="btn btn-primary w-100">Ingresar</button>
+    <div id="login_feedback" class="msg text-danger mt-2"></div>
+  </div>
+`;
+sections['categorias'] = `
+  <div class="card-slim">
+    <h3>Categorías</h3>
+    <p class="muted-small">Filtra por categoría y revisa los platos.</p>
+    <div class="d-flex gap-2 mb-2">
+      <button class="btn btn-outline-secondary" onclick="renderCategory('salados')">Salados</button>
+      <button class="btn btn-outline-secondary" onclick="renderCategory('postres')">Postres</button>
+      <button class="btn btn-outline-secondary" onclick="renderCategory('ofertas')">Ofertas</button>
+    </div>
+    <div id="catArea" class="productos"></div>
+  </div>
+`;
+sections['carrito'] = `
+  <div class="card-slim">
+    <h3>Carrito</h3>
+    <div id="cartList"></div>
+    <div class="mt-2 d-flex gap-2">
+      <button id="btnOpenCart" class="btn btn-outline-primary">Actualizar</button>
+      <button id="btnCheckout" class="btn btn-success">Ir a pagar</button>
+    </div>
+  </div>
+`;
+sections['direccion'] = `
+  <div class="card-slim">
+    <h3>Dirección de entrega</h3>
+    <input id="dir_street" class="form-control mb-2" placeholder="Calle / Av." />
+    <input id="dir_number" class="form-control mb-2" placeholder="Número" />
+    <input id="dir_comuna" class="form-control mb-2" placeholder="Comuna (ej. Santiago Centro)" />
+    <button id="btnSaveDir" class="btn btn-primary">Confirmar dirección</button>
+    <div id="dirMsg" class="mt-3"></div>
+  </div>
+`;
+sections['pago'] = `
+  <div class="card-slim">
+    <h3>Medio de Pago (simulado)</h3>
+    <select id="payScenario" class="form-select mb-2">
+      <option value="success">Pago exitoso</option>
+      <option value="rejected">Pago rechazado</option>
+      <option value="down">Conexión caída (banco)</option>
+    </select>
+    <input id="pay_card" class="form-control mb-2" placeholder="Número de tarjeta" />
+    <button id="btnPay" class="btn btn-primary w-100">Pagar</button>
+    <div id="payMsg" class="mt-2"></div>
+  </div>
+`;
+sections['validarPago'] = `
+  <div class="card-slim">
+    <h3>Validación de pago (admin)</h3>
+    <select id="valStatus" class="form-select mb-2">
+      <option value="ok">Banco confirma (Pago validado)</option>
+      <option value="nok">Banco rechaza (Pago no validado)</option>
+      <option value="dup">Duplicidad detectada</option>
+    </select>
+    <button id="btnValidate" class="btn btn-primary">Procesar pago</button>
+    <div id="valResult" class="mt-3"></div>
+  </div>
+`;
+sections['boleta'] = `
+  <div class="card-slim">
+    <h3>Boleta digital</h3>
+    <select id="boletaScenario" class="form-select mb-2">
+      <option value="sent">Boleta enviada</option>
+      <option value="mailerror">Error en envío</option>
+      <option value="invalid">Email inválido</option>
+    </select>
+    <input id="boleta_email" class="form-control mb-2" placeholder="tu@correo.com" />
+    <button id="btnBoleta" class="btn btn-primary">Finalizar compra</button>
+    <div id="boletaMsg" class="mt-3"></div>
+  </div>
+`;
+sections['estado'] = `
+  <div class="card-slim">
+    <h3>Estado del pedido</h3>
+    <p>Orden: <strong>#1001</strong></p>
+    <select id="statusSel" class="form-select mb-2">
+      <option value="preparacion">En preparación</option>
+      <option value="enruta">En ruta</option>
+      <option value="entregado">Entregado</option>
+      <option value="cancelado">Cancelado</option>
+    </select>
+    <button id="btnCheckStatus" class="btn btn-primary">Consultar estado</button>
+    <div id="estadoResult" class="mt-3"></div>
+  </div>
+`;
+sections['historial'] = `
+  <div class="card-slim">
+    <h3>Historial de pedidos</h3>
+    <div class="d-flex gap-2 justify-content-end mb-2">
+      <button id="btnLoadHistory" class="btn btn-primary">Cargar historial</button>
+      <button id="btnToggleError" class="btn btn-outline-secondary">Simular error: OFF</button>
+    </div>
+    <div id="historyArea"></div>
+  </div>
+`;
+sections['notificaciones'] = `
+  <div class="card-slim">
+    <h3>Notificaciones</h3>
+    <div class="d-flex gap-2 mb-2">
+      <button class="btn btn-outline-primary" onclick="appNotify('confirmado')">Sim: Pedido confirmado</button>
+      <button class="btn btn-outline-primary" onclick="appNotify('enviado')">Sim: Pedido enviado</button>
+      <button class="btn btn-outline-primary" onclick="appNotify('retrasado')">Sim: Pedido retrasado</button>
+    </div>
+    <div id="notiList"></div>
+  </div>
+`;
+sections['buscar'] = `
+  <div class="card-slim">
+    <h3>Buscar y filtrar</h3>
+    <div class="d-flex gap-2 mb-2">
+      <input id="search_q" class="form-control" placeholder="Buscar (ej: empanada)" />
+      <select id="search_cat" class="form-select" style="width:160px">
+        <option value="">Todas</option><option value="postres">Postres</option><option value="salados">Salados</option>
+      </select>
+      <button id="btnDoSearch" class="btn btn-primary">Buscar</button>
+    </div>
+    <div id="searchResults" class="productos"></div>
+  </div>
+`;
+sections['disponibilidad'] = `
+  <div class="card-slim">
+    <h3>Disponibilidad</h3>
+    <div class="d-flex justify-content-end my-2">
+      <button id="btnSimulate" class="btn btn-primary">Simular compra externa</button>
+    </div>
+    <div id="stockArea" class="productos"></div>
+  </div>
+`;
+sections['seguimiento'] = `
+  <div class="card-slim">
+    <h3>Seguimiento de despacho</h3>
+    <select id="track" class="form-select mb-2">
+      <option value="inroute">Pedido en ruta</option>
+      <option value="delivered">Pedido entregado</option>
+      <option value="gpsfail">Error en GPS</option>
+    </select>
+    <button id="btnTrack" class="btn btn-primary">Ver estado</button>
+    <div id="trackOut" class="mt-3"></div>
+  </div>
+`;
+sections['confirmDelivery'] = `
+  <div class="card-slim">
+    <h3>Confirmar recepción</h3>
+    <p>Orden #2001</p>
+    <div class="d-flex gap-2 justify-content-center">
+      <button id="btnConfirmDel" class="btn btn-success">Confirmar entrega</button>
+      <button id="btnRejectDel" class="btn btn-danger">Rechazar entrega</button>
+    </div>
+    <p class="mt-3 muted-small">Si no confirmas en 24h, el sistema marcará como entregado automáticamente (simulado).</p>
+    <div id="confirmStatus" class="mt-3"></div>
+  </div>
+`;
+function formatCurrency(n){ return '$' + (n).toLocaleString('es-CL'); }
+function renderUserInfo(){ document.getElementById('userInfo').textContent = App.currentUser ? `Conectado: ${App.currentUser}` : 'Invitado'; }
+window.initSection = {};
+window.initSection['menu'] = function(){
+  const products = [
+    {name:'Empanada de pollo', price:800, cat:'salados'},
+    {name:'Pizza familiar', price:8000, cat:'salados'},
+    {name:'Pollo asado', price:6500, cat:'salados'},
+    {name:'Torta de chocolate', price:5000, cat:'postres'}
+  ];
+  const area = document.getElementById('menuProducts'); area.innerHTML = '';
+  products.forEach(p=>{
+    const d = document.createElement('div'); d.className='producto';
+    d.innerHTML = `<div style="height:110px;background:#eee;margin-bottom:8px"></div>
+      <h5>${p.name}</h5><p>${formatCurrency(p.price)}</p>
+      <button class="btn btn-success" onclick="tryAddCart('${p.name}', ${p.price})">Agregar</button>`;
+    area.appendChild(d);
+  });
+};
+window.initSection['registro'] = function(){
+  const fb = document.getElementById('reg_feedback'); if(fb) fb.textContent='';
+  document.getElementById('btnReg').onclick = ()=>{
+    const email = document.getElementById('reg_email').value.trim();
+    const pw = document.getElementById('reg_password').value;
+    const fb = document.getElementById('reg_feedback'); fb.textContent='';
+    if(!email || !pw){ fb.textContent='Completa todos los campos'; return; }
+    if(App.users.some(u=>u.email===email)){ fb.textContent='El email ya está en uso'; alert('El email ya está en uso'); return; }
+    if(pw.length < 6 || !/[a-zA-Z]/.test(pw) || !/\d/.test(pw)){ fb.textContent='La contraseña es insegura'; alert('La contraseña es insegura'); return; }
+    App.users.push({email, password: pw, locked:false});
+    App.currentUser = email;
+    renderUserInfo();
+    fb.classList.remove('text-danger'); fb.classList.add('text-success'); fb.textContent='Cuenta creada. Redirigiendo a Menú (simulado)';
+    alert('Registro exitoso — redirigiendo al Menú');
+    showSection('menu');
+  };
+};
+window.initSection['login'] = function(){
+  const fb = document.getElementById('login_feedback'); if(fb) fb.textContent='';
+  document.getElementById('btnLogin').onclick = ()=>{
+    const email = document.getElementById('login_email').value.trim();
+    const pw = document.getElementById('login_password').value;
+    if(!email||!pw){ fb.textContent='Completa todos los campos'; return; }
+    const user = App.users.find(u=>u.email===email);
+    if(!user){ fb.textContent='Credenciales inválidas'; alert('Credenciales inválidas'); return; }
+    if(user.locked){ fb.textContent='Tu cuenta está temporalmente bloqueada'; alert('Tu cuenta está temporalmente bloqueada'); return; }
+    if(user.password !== pw){
+      App.failedAttempts[email] = (App.failedAttempts[email]||0) + 1;
+      if(App.failedAttempts[email] >= 3){ user.locked = true; fb.textContent='Tu cuenta está temporalmente bloqueada'; alert('Tu cuenta está temporalmente bloqueada'); }
+      else { fb.textContent='Credenciales inválidas'; alert('Credenciales inválidas'); }
+      return;
+    }
+    App.failedAttempts[email] = 0;
+    App.currentUser = email; renderUserInfo();
+    fb.classList.remove('text-danger'); fb.classList.add('text-success'); fb.textContent='Accediste a tu perfil (simulado)';
+    alert('Inicio de sesión correcto — redirigiendo al Menú');
+    showSection('menu');
+  };
+};
+window.initSection['categorias'] = function(){ renderCategory('salados'); };
+function renderCategory(cat){
+  const items = {
+    'salados': [
+      {name:'Empanada de carne', price:700}, {name:'Empanada de pollo', price:800}, {name:'Pizza familiar', price:8000}
+    ],
+    'postres': [
+      {name:'Torta de chocolate', price:5000}, {name:'Suspiro limeño', price:3000}
+    ],
+    'ofertas': [
+      {name:'Combo empanadas x6', price:4200}
+    ]
+  };
+  const area = document.getElementById('catArea'); area.innerHTML = '';
+  (items[cat] || []).forEach(p=>{
+    const d = document.createElement('div'); d.className='producto';
+    d.innerHTML = `<div style="height:110px;background:#eee;margin-bottom:8px"></div>
+      <h5>${p.name}</h5><p>${formatCurrency(p.price)}</p>
+      <button class="btn btn-success" onclick="tryAddCart('${p.name}', ${p.price})">Agregar</button>`;
+    area.appendChild(d);
+  });
+}
+window.initSection['carrito'] = function(){
+  document.getElementById('btnOpenCart').onclick = renderCart;
+  document.getElementById('btnCheckout').onclick = ()=> showSection('pago');
+  renderCart();
+};
+function renderCart(){
+  const list = document.getElementById('cartList'); if(!list) return;
+  list.innerHTML = '';
+  if(App.cart.length === 0){ list.innerHTML = '<p>Tu carrito está vacío</p>'; return; }
+  App.cart.forEach((p, i)=>{
+    const el = document.createElement('div'); el.className='d-flex justify-content-between align-items-center mb-1';
+    el.innerHTML = `<div>${p.name} <small class="muted-small">${p.price?formatCurrency(p.price):''}</small></div>
+      <div><button class="btn btn-sm btn-danger" onclick="removeFromCart(${i})">Eliminar</button></div>`;
+    list.appendChild(el);
+  });
+  const total = App.cart.reduce((s,x)=>s + (x.price||0),0);
+  const footer = document.createElement('div'); footer.className='mt-2';
+  footer.innerHTML = `<strong>Total: ${formatCurrency(total)}</strong>`;
+  list.appendChild(footer);
+}
+window.initSection['direccion'] = function(){
+  const msg = document.getElementById('dirMsg'); if(msg) msg.textContent='';
+  document.getElementById('btnSaveDir').onclick = ()=>{
+    const street = document.getElementById('dir_street').value.trim();
+    const num = document.getElementById('dir_number').value.trim();
+    const comuna = document.getElementById('dir_comuna').value.trim();
+    if(!street||!num||comuna.length<3){ alert('La dirección está incompleta'); if(msg) msg.textContent='La dirección está incompleta'; return; }
+    const comunaNormalized = comuna.split(' ')[0];
+    if(!App.covered.some(c=>c.toLowerCase().includes(comunaNormalized.toLowerCase()))){ alert('Zona fuera de reparto'); if(msg) msg.textContent='Zona fuera de reparto'; return; }
+    alert('Dirección validada y asociada al pedido'); if(msg) msg.textContent='Dirección guardada (simulado)';
+  };
+};
+window.initSection['pago'] = function(){
+  const msg = document.getElementById('payMsg'); if(msg) msg.textContent='';
+  document.getElementById('btnPay').onclick = ()=>{
+    const sc = document.getElementById('payScenario').value;
+    if(sc==='success'){ alert('Pago confirmado'); msg.textContent='Pago confirmado (simulado)'; handlePostPayment(true); }
+    else if(sc==='rejected'){ alert('Pago rechazado'); msg.textContent='Pago rechazado'; handlePostPayment(false); }
+    else { alert('Error en la pasarela de pago'); msg.textContent='Error en la pasarela de pago'; handlePostPayment(false); }
+  };
+};
+window.initSection['validarPago'] = function(){
+  const res = document.getElementById('valResult'); if(res) res.textContent='';
+  document.getElementById('btnValidate').onclick = ()=>{
+    const st = document.getElementById('valStatus').value;
+    if(st==='ok'){ res.textContent='Pago validado — Pedido confirmado'; alert('Pago validado'); }
+    else if(st==='nok'){ res.textContent='Error en pago'; alert('Error en pago'); }
+    else { res.textContent='Duplicidad detectada — Ignorando duplicado'; alert('Duplicidad detectada'); }
+  };
+};
+window.initSection['boleta'] = function(){
+  const msg = document.getElementById('boletaMsg'); if(msg) msg.textContent='';
+  document.getElementById('btnBoleta').onclick = ()=>{
+    const sc = document.getElementById('boletaScenario').value;
+    const email = document.getElementById('boleta_email').value.trim();
+    if(sc==='sent'){ alert('Boleta enviada al correo'); msg.textContent = 'Boleta enviada al correo: ' + (email || '(simulado)'); }
+    else if(sc==='mailerror'){ alert('Error en envío. Puedes descargar la boleta desde tu perfil'); msg.textContent = 'Error en envío. La boleta está disponible para descarga en tu perfil (simulado).'; }
+    else { alert('No se puede enviar la boleta: Email inválido'); msg.textContent = 'No se pudo enviar la boleta: Email inválido'; }
+  };
+};
+window.initSection['estado'] = function(){
+  document.getElementById('btnCheckStatus').onclick = ()=>{
+    const v = document.getElementById('statusSel').value; const res = document.getElementById('estadoResult');
+    if(v==='preparacion'){ res.textContent='En preparación'; alert('En preparación'); }
+    else if(v==='entregado'){ res.textContent='Entregado'; alert('Entregado'); }
+    else if(v==='cancelado'){ res.textContent='Cancelado'; alert('Cancelado'); }
+    else { res.textContent='En ruta'; alert('En ruta'); }
+  };
+};
+window.initSection['historial'] = function(){
+  let simulateError = false;
+  const btnToggle = document.getElementById('btnToggleError');
+  const btnLoad = document.getElementById('btnLoadHistory');
+  const area = document.getElementById('historyArea'); area.innerHTML='';
+  btnToggle.onclick = ()=>{
+    simulateError = !simulateError; btnToggle.textContent = 'Simular error: ' + (simulateError? 'ON':'OFF');
+  };
+  btnLoad.onclick = ()=>{
+    area.innerHTML = '';
+    if(simulateError){ alert('No se pudo cargar el historial'); area.innerHTML = '<div class="p-3 text-danger">No se pudo cargar el historial</div>'; return; }
+    const user = App.currentUser;
+    const userOrders = App.orders.filter(o => !user || o.user === user);
+    if(userOrders.length===0){ alert('Aún no tienes pedidos registrados'); area.innerHTML = '<div class="p-3">Aún no tienes pedidos registrados</div>'; return; }
+    userOrders.forEach(o=>{
+      const div = document.createElement('div'); div.className='order p-3 mb-2 bg-white';
+      div.innerHTML = `<strong>Orden #${o.id}</strong><p>Fecha: ${o.date} — Estado: ${o.status} — Total: ${formatCurrency(o.total)}</p>
+        <button class="btn btn-sm btn-outline-primary" onclick="alert('Ver detalles orden #${o.id}')">Ver detalles</button>`;
+      area.appendChild(div);
+    });
+    alert('Historial cargado');
+  };
+};
+window.initSection['notificaciones'] = function(){ renderNotiList(); };
+window.initSection['buscar'] = function(){
+  document.getElementById('btnDoSearch').onclick = ()=>{
+    const q = document.getElementById('search_q').value.trim().toLowerCase();
+    const cat = document.getElementById('search_cat').value;
+    const area = document.getElementById('searchResults'); area.innerHTML='';
+    const dishes = [
+      {name:'Empanada de carne', cat:'salados', price:700},
+      {name:'Empanada de pollo', cat:'salados', price:800},
+      {name:'Torta de chocolate', cat:'postres', price:5000},
+      {name:'Pizza familiar', cat:'salados', price:8000}
+    ];
+    const results = dishes.filter(d=> {
+      const byName = !q || d.name.toLowerCase().includes(q);
+      const byCat = !cat || d.cat===cat;
+      return byName && byCat;
+    });
+    if(results.length===0){ alert('No se encontraron platos'); area.innerHTML='<div>No se encontraron platos</div>'; return; }
+    results.forEach(r=>{
+      const c = document.createElement('div'); c.className='producto';
+      c.innerHTML = `<h5>${r.name}</h5><p>${r.cat}</p><p><strong>${formatCurrency(r.price)}</strong></p><button class="btn btn-success" onclick="tryAddCart('${r.name}', ${r.price})">Agregar</button>`;
+      area.appendChild(c);
+    });
+    alert('Resultados mostrados');
+  };
+};
+window.initSection['disponibilidad'] = function(){
+  document.getElementById('btnSimulate').onclick = ()=>{
+    if(App.stock['Empanada'] >= 3) App.stock['Empanada'] -= 3;
+    else App.stock['Empanada'] = Math.max(0, App.stock['Empanada'] - 1);
+    alert('Se simuló una compra externa. Stock actualizado');
+    renderStock();
+  };
+  renderStock();
+};
+window.initSection['seguimiento'] = function(){
+  document.getElementById('btnTrack').onclick = ()=>{
+    const v = document.getElementById('track').value;
+    const out = document.getElementById('trackOut'); out.textContent='';
+    if(v==='inroute'){ out.textContent='Pedido en ruta'; alert('Pedido en ruta'); }
+    else if(v==='delivered'){ out.textContent='Pedido entregado'; alert('Pedido entregado'); }
+    else { out.textContent='Seguimiento no disponible'; alert('Seguimiento no disponible'); }
+  };
+};
+window.initSection['confirmDelivery'] = function(){
+  document.getElementById('btnConfirmDel').onclick = ()=>{
+    document.getElementById('confirmStatus').textContent='Entregado';
+    alert('Pedido marcado como Entregado');
+  };
+  document.getElementById('btnRejectDel').onclick = ()=>{
+    document.getElementById('confirmStatus').textContent='Incidencia registrada';
+    alert('Incidencia registrada (simulado)');
+  };
+  setTimeout(()=>{ if(!document.getElementById('confirmStatus').textContent){ document.getElementById('confirmStatus').textContent='Entregado (automáticamente)'; alert('Pedido marcado como entregado automáticamente (simulado)'); } }, 24000);
+};
+function showSection(name){
+  const content = document.getElementById('content');
+  content.innerHTML = sections[name] || `<div class="card-slim"><p>Sección "${name}" no encontrada.</p></div>`;
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('active', a.dataset.section === name));
+  if(window.initSection && typeof window.initSection[name] === 'function') window.initSection[name]();
+}
+function tryAddCart(name, price){
+  if(App.stock[name] === 0){ alert('Producto no disponible'); return; }
+  App.cart.push({name, price});
+  alert(name + ' agregado al carrito');
+  renderCart();
+}
+function removeFromCart(i){
+  if(i >= 0 && i < App.cart.length){
+    const removed = App.cart.splice(i,1)[0];
+    alert(removed.name + ' eliminado');
+    renderCart();
+  }
+}
+function appNotify(type){
+  let text = '';
+  if(type==='confirmado') text = 'Tu pedido fue confirmado';
+  else if(type==='enviado') text = 'Tu pedido está en camino';
+  else text = 'Tu pedido llegará con retraso';
+  App.notifications.unshift({text, date: new Date().toLocaleString()});
+  renderNotiList();
+  alert(text);
+}
+function renderNotiList(){
+  const list = document.getElementById('notiList'); if(!list) return;
+  list.innerHTML = '';
+  App.notifications.forEach(n=>{
+    const el = document.createElement('div'); el.className='noti';
+    el.textContent = `${n.date} — ${n.text}`;
+    list.appendChild(el);
+  });
+}
+function handlePostPayment(success){
+  const msg = document.getElementById('payMsg'); if(!msg) return;
+  if(success){
+    const total = App.cart.reduce((s,x)=>s + (x.price||0),0);
+    const id = App.nextOrderId++;
+    App.orders.push({id, user: App.currentUser || 'invitado', date: new Date().toLocaleDateString(), status:'En preparación', total});
+    App.cart = []; renderCart();
+    msg.textContent += ` Pedido creado: #${id}`;
+    alert('Pedido creado #'+id);
+    renderNotiList();
+  } else {
+    // no se crea orden
+  }
+}
+function renderStock(){
+  const area = document.getElementById('stockArea'); if(!area) return;
+  area.innerHTML = '';
+  Object.keys(App.stock).forEach(k=>{
+    const c = document.createElement('div'); c.className='producto';
+    const status = App.stock[k] > 0 ? `Disponible (${App.stock[k]})` : 'Agotado';
+    c.innerHTML = `<h5>${k}</h5><p>${status}</p><button class="btn btn-success" onclick="tryAddCart('${k}', 1000)">Agregar</button>`;
+    area.appendChild(c);
+  });
+}
+document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', ()=> showSection(a.dataset.section)));
+
+
+window.showSection = showSection;
+window.tryAddCart = tryAddCart;
+window.removeFromCart = removeFromCart;
+window.appNotify = appNotify;
+window.renderStock = renderStock;
+window.renderCart = renderCart;
+window.renderCategory = renderCategory;
+
+
+renderUserInfo();
+showSection('menu');
+
+</script>
+</body>
+</html>
